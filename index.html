@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Snake Game+</title>
+  <style>
+    canvas {
+      background: #111;
+      display: block;
+      margin: 20px auto;
+      border: 3px solid lime;
+    }
+    body {
+      color: white;
+      background: #222;
+      font-family: Arial, sans-serif;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+<h1>Snake Game+</h1>
+<canvas id="game" width="400" height="400"></canvas>
+<p>Score: <span id="score">0</span> | High Score: <span id="highscore">0</span></p>
+<p id="gameOver" style="display:none; font-size:20px; color:red;">
+  Game Over! <button onclick="restartGame()">Retry</button>
+</p>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+const box = 20;
+const size = 20;
+
+let snake = [{ x: 10, y: 10 }];
+let fruit = { x: 15, y: 15 };
+let dir = "";
+let score = 0;
+let speed = 200;
+let highScore = localStorage.getItem("highScore") || 0;
+
+document.getElementById("highscore").textContent = highScore;
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Draw fruit
+  ctx.fillStyle = getRandomColor();
+  ctx.fillRect(fruit.x * box, fruit.y * box, box, box);
+
+  // Draw snake
+  for (let i = 0; i < snake.length; i++) {
+    ctx.fillStyle = i === 0 ? "lime" : "green";
+    ctx.fillRect(snake[i].x * box, snake[i].y * box, box, box);
+  }
+}
+
+function move() {
+  let head = { ...snake[0] };
+
+  if (dir === "LEFT") head.x--;
+  if (dir === "RIGHT") head.x++;
+  if (dir === "UP") head.y--;
+  if (dir === "DOWN") head.y++;
+
+  // Wrap-around wall (Optional)
+  head.x = (head.x + size) % size;
+  head.y = (head.y + size) % size;
+
+  // Game over if collide with tail
+  for (let i = 1; i < snake.length; i++) {
+    if (head.x === snake[i].x && head.y === snake[i].y) {
+      gameOver();
+      return;
+    }
+  }
+
+  snake.unshift(head);
+
+  // Eat fruit
+  if (head.x === fruit.x && head.y === fruit.y) {
+    score += 10;
+    speed = Math.max(50, speed - 5); // Increase difficulty
+    document.getElementById("score").textContent = score;
+    if (score > highScore) {
+      highScore = score;
+      localStorage.setItem("highScore", score);
+      document.getElementById("highscore").textContent = score;
+    }
+    fruit = {
+      x: Math.floor(Math.random() * size),
+      y: Math.floor(Math.random() * size),
+    };
+  } else {
+    snake.pop();
+  }
+
+  draw();
+  setTimeout(move, speed);
+}
+
+function restartGame() {
+  snake = [{ x: 10, y: 10 }];
+  dir = "";
+  score = 0;
+  speed = 200;
+  document.getElementById("score").textContent = 0;
+  document.getElementById("gameOver").style.display = "none";
+  move();
+}
+
+function gameOver() {
+  document.getElementById("gameOver").style.display = "block";
+}
+
+document.addEventListener("keydown", function (e) {
+  if (e.key === "ArrowLeft" && dir !== "RIGHT") dir = "LEFT";
+  if (e.key === "ArrowRight" && dir !== "LEFT") dir = "RIGHT";
+  if (e.key === "ArrowUp" && dir !== "DOWN") dir = "UP";
+  if (e.key === "ArrowDown" && dir !== "UP") dir = "DOWN";
+});
+
+function getRandomColor() {
+  const colors = ["red", "orange", "yellow", "blue", "pink"];
+  return colors[Math.floor(Math.random() * colors.length)];
+}
+
+move();
+</script>
+</body>
+</html>
